@@ -79,6 +79,9 @@ class UserInfo(AbstractBaseUser):
         # Simplest possible answer: All admins are staff
         return self.is_admin
 
+    class Meta:
+        verbose_name_plural = "      1. Agents, surveyers and clients"
+
 class Category(models.Model):
     category_name = models.CharField(max_length=100)
 
@@ -86,7 +89,7 @@ class Category(models.Model):
         return self.category_name
     
     class Meta:
-        verbose_name_plural = "Categories"
+        verbose_name_plural = "     2. Categories"
 
 class Policy_pdf(models.Model):
     policy_pdf_file = models.FileField(upload_to='temp_policies', blank=True, null=True, storage=OverwriteStorage())
@@ -100,7 +103,10 @@ class Policy(models.Model):
     policy_expiry_date = models.DateField(blank=True, null=True)
     policy_pdf = models.FileField(
         upload_to='policies', blank=True, null=True, storage=OverwriteStorage())
+    gross_premium = models.IntegerField(default=0)
+    percentage_on_gross_premium_for_comission = models.DecimalField(default=0.0, max_digits=4,decimal_places=2)
     premium = models.IntegerField(default=0)
+    personal_comission = models.DecimalField(default=0.0, max_digits=16,decimal_places=3)
     policy_added_to_system_date = models.DateTimeField(auto_now_add=True)
     branch_ref_code = models.CharField(max_length=100, blank=True, null=True)
     main_acc_code = models.CharField(max_length=100, blank=True, null=True)
@@ -115,6 +121,8 @@ class Policy(models.Model):
 
 
     def save(self, *args, **kwargs):
+
+        self.personal_comission = (float(self.gross_premium) * float(self.percentage_on_gross_premium_for_comission)/100) * (1-0.18)
         if self.premium != 0:
             if self.outstanding == 0:
                 self.outstanding = self.premium
@@ -130,7 +138,7 @@ class Policy(models.Model):
             return str(self.id)
 
     class Meta:
-        verbose_name_plural = "Policies"
+        verbose_name_plural = "    3. Policies"
         ordering = ['-policy_issue_date']
 
 
@@ -166,6 +174,7 @@ class Receipt(models.Model):
             super(Receipt, self).delete()
 
     class Meta:
+        verbose_name_plural = "  5. Receipts"
         ordering = ['-receipt_date']
 
 class Endorsement(models.Model):
@@ -351,4 +360,42 @@ class Endorsement(models.Model):
         return self.endorsement_number
     
     class Meta:
+        verbose_name_plural = "   4. Endorsements"
         ordering = ['-endorsement_issue_date']
+
+
+class Claim(models.Model):
+    policy = models.ForeignKey(Policy, related_name='claims', on_delete=models.CASCADE)
+    date_of_loss = models.DateField()
+    claim_number = models.CharField(max_length=100, blank=True, null=True,)
+    claim_form = models.FileField(upload_to='claim_forms', blank=True, null=True, storage=OverwriteStorage())
+    claim_estimate = models.IntegerField(blank=True, null=True)
+    claim_bill = models.FileField(upload_to='claim_bills', blank=True, null=True, storage=OverwriteStorage())
+    bill_cost = models.IntegerField(blank=True, null=True)
+    police_report = models.FileField(upload_to='police_reports', blank=True, null=True, storage=OverwriteStorage())
+    departmental_inquiry_report = models.FileField(upload_to='inquiry_reports', blank=True, null=True, storage=OverwriteStorage())
+    remarks = models.TextField(blank=True, null=True,)
+    # motor
+    vehicle_registration_copy = models.FileField(upload_to='registration', blank=True, null=True, storage=OverwriteStorage())
+    driving_license = models.FileField(upload_to='driving_license', blank=True, null=True, storage=OverwriteStorage())
+    cnic_copy = models.FileField(upload_to='cnic_copies', blank=True, null=True, storage=OverwriteStorage())
+    driver_statement = models.TextField(blank=True, null=True,)
+    # property
+    fire_brigade_report = models.FileField(upload_to='fire_reports', blank=True, null=True, storage=OverwriteStorage())
+    # marine
+    bill_of_ladding = models.FileField(upload_to='laddings', blank=True, null=True, storage=OverwriteStorage())
+    commercial_invoice = models.FileField(upload_to='commercial_invoices', blank=True, null=True, storage=OverwriteStorage())
+    # miscellaneous
+    misc_document_1 = models.FileField(upload_to='misc_docs', blank=True, null=True, storage=OverwriteStorage())
+    misc_document_2 = models.FileField(upload_to='misc_docs', blank=True, null=True, storage=OverwriteStorage())
+    misc_document_3 = models.FileField(upload_to='misc_docs', blank=True, null=True, storage=OverwriteStorage())
+    misc_document_4 = models.FileField(upload_to='misc_docs', blank=True, null=True, storage=OverwriteStorage())
+    misc_document_5 = models.FileField(upload_to='misc_docs', blank=True, null=True, storage=OverwriteStorage())
+
+
+    def __str__(self):
+        return self.claim_number
+    
+    class Meta:
+        verbose_name_plural = " 6. Claims"
+        ordering = ['-date_of_loss']

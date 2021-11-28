@@ -32,7 +32,7 @@ DEBUG = True
 
 AUTH_USER_MODEL = 'insrnceDataApp.UserInfo'
 
-ALLOWED_HOSTS = ['192.168.10.5', '127.0.0.1']
+ALLOWED_HOSTS = ['192.168.10.8', '127.0.0.1']
 
 
 # Application definition
